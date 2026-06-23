@@ -176,7 +176,7 @@ let msalApp=null,currentAccount=null;
 async function initMSAL(){
   msalApp=new msal.PublicClientApplication({
     auth:{clientId:CLIENT_ID,authority:AUTHORITY,redirectUri:'https://kyriel-ao.github.io/crm-kyriel/'+window.location.pathname.split('/').pop()},
-    cache:{cacheLocation:'sessionStorage'}
+    cache:{cacheLocation:'sessionStorage'},system:{allowNativeBroker:false,windowHashTimeout:9000,iframeHashTimeout:9000,loadFrameTimeout:9000}
   });
   await msalApp.initialize();
   const resp=await msalApp.handleRedirectPromise();

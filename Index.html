@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>CRM Kyriel — Accueil</title>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0ec;color:#1a1a18;font-size:13px;}
+.topbar{background:#1D9E75;padding:0 16px;display:flex;align-items:center;gap:12px;height:46px;flex-shrink:0;}
+.topbar-title{font-size:15px;font-weight:600;color:#fff;}
+.topbar-entity{font-size:11px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.18);padding:3px 10px;border-radius:12px;}
+.topbar-links{display:flex;gap:6px;margin-left:auto;}
+.topbar-link{font-size:11px;color:rgba(255,255,255,.85);text-decoration:none;padding:4px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.3);}
+.topbar-link:hover{background:rgba(255,255,255,.15);}
+.topbar-user{font-size:11px;color:rgba(255,255,255,.7);}
+.topbar-logout{font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;text-decoration:underline;}
+
+.auth-screen{display:flex;align-items:center;justify-content:center;height:calc(100vh - 46px);}
+.auth-card{background:#fff;border-radius:12px;padding:36px 44px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08);max-width:380px;}
+.auth-card .ico{font-size:40px;margin-bottom:14px;}
+.auth-card h2{font-size:18px;font-weight:600;margin-bottom:8px;}
+.auth-card p{font-size:13px;color:#666;margin-bottom:22px;line-height:1.6;}
+.btn-login{background:#1D9E75;color:#fff;border:none;padding:11px 30px;border-radius:7px;font-size:14px;font-weight:500;cursor:pointer;}
+.btn-login:hover{background:#16845f;}
+
+.main{display:flex;flex-direction:column;height:calc(100vh - 46px);}
+
+/* Entity tabs */
+.entity-tabs{background:#fff;border-bottom:2px solid #e8e8e0;padding:0 14px;display:flex;gap:0;flex-shrink:0;}
+.etab{padding:9px 20px;font-size:12px;font-weight:500;color:#888;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;}
+.etab:hover{color:#444;}
+.etab.active{color:#1D9E75;border-bottom-color:#1D9E75;font-weight:600;}
+.etab.kcn.active{color:#1D9E75;border-bottom-color:#1D9E75;}
+.etab.kcr.active{color:#534AB7;border-bottom-color:#534AB7;}
+.etab.kr.active{color:#D85A30;border-bottom-color:#D85A30;}
+.etab.ka.active{color:#BA7517;border-bottom-color:#BA7517;}
+
+.toolbar{background:#fff;border-bottom:1px solid #ddd;padding:7px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.btn{font-size:11px;padding:5px 12px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;color:#444;}
+.btn:hover{background:#f5f5f0;}
+.btn.primary{background:#1D9E75;color:#fff;border-color:#1D9E75;}
+.btn.primary:hover{background:#16845f;}
+.btn.danger{color:#C0392B;border-color:#e8a8a8;}
+.btn-sep{width:1px;height:22px;background:#e0e0e0;}
+.filter{font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:5px;background:#fff;}
+.search{font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:5px;width:200px;}
+
+.kpi-strip{background:#fff;border-bottom:1px solid #e8e8e0;padding:7px 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.ks{display:flex;flex-direction:column;}
+.ks-lbl{font-size:10px;color:#888;}
+.ks-val{font-size:15px;font-weight:600;}
+.green{color:#1D9E75;}.red{color:#C0392B;}.blue{color:#185FA5;}.orange{color:#BA7517;}.purple{color:#534AB7;}
+.ks-sub{font-size:10px;color:#aaa;}
+.ks-sep{width:1px;height:32px;background:#e8e8e0;}
+
+.tbl-wrap{flex:1;overflow:auto;background:#fff;}
+table{border-collapse:collapse;width:100%;min-width:1100px;}
+thead th{background:#f5f5f0;border-bottom:2px solid #1D9E75;border-right:1px solid #e0e0e0;padding:6px 8px;font-size:11px;font-weight:600;color:#555;white-space:nowrap;position:sticky;top:0;z-index:5;cursor:pointer;user-select:none;}
+thead th:hover{background:#ebebeb;}
+tbody td{padding:5px 8px;border-bottom:1px solid #f0f0ec;border-right:1px solid #f5f5f0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;vertical-align:middle;}
+tbody tr:hover td{background:#f5fff9;}
+
+.badge{font-size:9px;padding:2px 7px;border-radius:8px;font-weight:600;white-space:nowrap;display:inline-block;}
+.bg{background:#dff2ea;color:#075038;}.bp{background:#fae5de;color:#8a2e10;}
+.ba{background:#faeeda;color:#633806;}.bi{background:#eeedfe;color:#3c3489;}
+.bs{background:#f0f0ec;color:#666;}.bn{background:#fdefd6;color:#5c3200;}
+.bpub{background:#ddeaf8;color:#0c447c;}.bpriv{background:#fae5de;color:#8a2e10;}
+.bkcn{background:#dff2ea;color:#075038;}.bkcr{background:#eeedfe;color:#3c3489;}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:10px;padding:22px;width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2);}
+.modal h3{font-size:14px;font-weight:600;margin-bottom:16px;color:#1D9E75;border-bottom:1px solid #eee;padding-bottom:10px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ff label{font-size:11px;font-weight:500;color:#555;display:block;margin-bottom:3px;}
+.ff input,.ff select,.ff textarea{width:100%;font-size:12px;padding:6px 9px;border:1px solid #ddd;border-radius:5px;background:#fff;font-family:inherit;}
+.ff input:focus,.ff select:focus,.ff textarea:focus{outline:none;border-color:#1D9E75;}
+.ff.full{grid-column:1/-1;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #eee;}
+
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a18;color:#fff;padding:10px 18px;border-radius:7px;font-size:12px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}.toast.success{background:#1D9E75;}.toast.error{background:#C0392B;}
+.loading{display:flex;align-items:center;justify-content:center;padding:30px;gap:10px;color:#888;}
+.spinner{width:18px;height:18px;border:2px solid #e0e0e0;border-top-color:#1D9E75;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.home{display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:24px;overflow-y:auto;height:calc(100vh - 46px);}
+.home-title{font-size:22px;font-weight:600;}
+.home-sub{font-size:13px;color:#888;}
+.section-lbl{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;align-self:flex-start;max-width:860px;width:100%;padding-bottom:4px;border-bottom:1px solid #e8e8e0;}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:860px;width:100%;}
+.card{background:#fff;border:1px solid #e8e8e0;border-radius:10px;padding:18px 20px;text-decoration:none;color:inherit;transition:all .2s;}
+.card:hover{box-shadow:0 4px 20px rgba(0,0,0,.1);transform:translateY(-2px);}
+.card-ico{font-size:26px;margin-bottom:8px;}
+.card-title{font-size:13px;font-weight:600;margin-bottom:3px;}
+.card-sub{font-size:11px;color:#888;line-height:1.5;}
+.card.kc{border-top:3px solid #1D9E75;}
+.card.kr{border-top:3px solid #D85A30;}
+.card.ka{border-top:3px solid #BA7517;}
+.card.analyse{border-top:3px solid #185FA5;grid-column:1/-1;display:flex;align-items:center;gap:16px;}
+.card.analyse .card-ico{font-size:36px;margin:0;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="topbar-title">🏠 CRM Groupe Kyriel</span>
+  <span style="font-size:11px;color:rgba(255,255,255,.7);">Planning AO · Tunnel commercial · Analyse</span>
+</div>
+<div class="home">
+  <div class="home-title">CRM Groupe Kyriel</div>
+  <div class="home-sub">Planning des appels d'offres · Tunnel commercial · Analyse stratégique</div>
+
+  <div class="section-lbl">📅 Planning AO</div>
+  <div class="cards">
+    <a class="card kc" href="Planning_KC.html">
+      <div class="card-ico">📅</div>
+      <div class="card-title">Planning KC</div>
+      <div class="card-sub">Kyriel Construction<br>KCN (Nantes) + KCR (Rennes)</div>
+    </a>
+    <a class="card kr" href="Planning_KR.html">
+      <div class="card-ico">📅</div>
+      <div class="card-title">Planning KR</div>
+      <div class="card-sub">Kyriel Réhabilitation</div>
+    </a>
+    <a class="card ka" href="Planning_KA.html">
+      <div class="card-ico">📅</div>
+      <div class="card-title">Planning KA</div>
+      <div class="card-sub">Kyriel Aluminium</div>
+    </a>
+  </div>
+
+  <div class="section-lbl">📊 Tunnel Commercial</div>
+  <div class="cards">
+    <a class="card kc" href="Tunnel_KC.html">
+      <div class="card-ico">📊</div>
+      <div class="card-title">Tunnel KC</div>
+      <div class="card-sub">Kyriel Construction<br>KCN (Nantes) + KCR (Rennes)</div>
+    </a>
+    <a class="card kr" href="Tunnel_KR.html">
+      <div class="card-ico">📊</div>
+      <div class="card-title">Tunnel KR</div>
+      <div class="card-sub">Kyriel Réhabilitation</div>
+    </a>
+    <a class="card ka" href="Tunnel_KA.html">
+      <div class="card-ico">📊</div>
+      <div class="card-title">Tunnel KA</div>
+      <div class="card-sub">Kyriel Aluminium</div>
+    </a>
+  </div>
+
+  <div class="section-lbl">📈 Analyse</div>
+  <div class="cards">
+    <a class="card analyse" href="Analyse_AO.html">
+      <div class="card-ico">📈</div>
+      <div>
+        <div class="card-title">Analyse AO Groupe</div>
+        <div class="card-sub">Dashboard consolidé · Carte département · Promoteurs · Cibles stratégiques · Export CODIR</div>
+      </div>
+    </a>
+  </div>
+</div>
+</body>
+</html>

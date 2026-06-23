@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Tunnel KR — Kyriel Réhabilitation — CRM Kyriel</title>
+<script src="msal-browser.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0ec;color:#1a1a18;font-size:13px;}
+.topbar{background:#1D9E75;padding:0 16px;display:flex;align-items:center;gap:12px;height:46px;flex-shrink:0;}
+.topbar-title{font-size:15px;font-weight:600;color:#fff;}
+.topbar-entity{font-size:11px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.18);padding:3px 10px;border-radius:12px;}
+.topbar-links{display:flex;gap:6px;margin-left:auto;}
+.topbar-link{font-size:11px;color:rgba(255,255,255,.85);text-decoration:none;padding:4px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.3);}
+.topbar-link:hover{background:rgba(255,255,255,.15);}
+.topbar-user{font-size:11px;color:rgba(255,255,255,.7);}
+.topbar-logout{font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;text-decoration:underline;}
+
+.auth-screen{display:flex;align-items:center;justify-content:center;height:calc(100vh - 46px);}
+.auth-card{background:#fff;border-radius:12px;padding:36px 44px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08);max-width:380px;}
+.auth-card .ico{font-size:40px;margin-bottom:14px;}
+.auth-card h2{font-size:18px;font-weight:600;margin-bottom:8px;}
+.auth-card p{font-size:13px;color:#666;margin-bottom:22px;line-height:1.6;}
+.btn-login{background:#1D9E75;color:#fff;border:none;padding:11px 30px;border-radius:7px;font-size:14px;font-weight:500;cursor:pointer;}
+.btn-login:hover{background:#16845f;}
+
+.main{display:flex;flex-direction:column;height:calc(100vh - 46px);}
+
+/* Entity tabs */
+.entity-tabs{background:#fff;border-bottom:2px solid #e8e8e0;padding:0 14px;display:flex;gap:0;flex-shrink:0;}
+.etab{padding:9px 20px;font-size:12px;font-weight:500;color:#888;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;}
+.etab:hover{color:#444;}
+.etab.active{color:#1D9E75;border-bottom-color:#1D9E75;font-weight:600;}
+.etab.kcn.active{color:#1D9E75;border-bottom-color:#1D9E75;}
+.etab.kcr.active{color:#534AB7;border-bottom-color:#534AB7;}
+.etab.kr.active{color:#D85A30;border-bottom-color:#D85A30;}
+.etab.ka.active{color:#BA7517;border-bottom-color:#BA7517;}
+
+.toolbar{background:#fff;border-bottom:1px solid #ddd;padding:7px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.btn{font-size:11px;padding:5px 12px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;color:#444;}
+.btn:hover{background:#f5f5f0;}
+.btn.primary{background:#1D9E75;color:#fff;border-color:#1D9E75;}
+.btn.primary:hover{background:#16845f;}
+.btn.danger{color:#C0392B;border-color:#e8a8a8;}
+.btn-sep{width:1px;height:22px;background:#e0e0e0;}
+.filter{font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:5px;background:#fff;}
+.search{font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:5px;width:200px;}
+
+.kpi-strip{background:#fff;border-bottom:1px solid #e8e8e0;padding:7px 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.ks{display:flex;flex-direction:column;}
+.ks-lbl{font-size:10px;color:#888;}
+.ks-val{font-size:15px;font-weight:600;}
+.green{color:#1D9E75;}.red{color:#C0392B;}.blue{color:#185FA5;}.orange{color:#BA7517;}.purple{color:#534AB7;}
+.ks-sub{font-size:10px;color:#aaa;}
+.ks-sep{width:1px;height:32px;background:#e8e8e0;}
+
+.tbl-wrap{flex:1;overflow:auto;background:#fff;}
+table{border-collapse:collapse;width:100%;min-width:1100px;}
+thead th{background:#f5f5f0;border-bottom:2px solid #1D9E75;border-right:1px solid #e0e0e0;padding:6px 8px;font-size:11px;font-weight:600;color:#555;white-space:nowrap;position:sticky;top:0;z-index:5;cursor:pointer;user-select:none;}
+thead th:hover{background:#ebebeb;}
+tbody td{padding:5px 8px;border-bottom:1px solid #f0f0ec;border-right:1px solid #f5f5f0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;vertical-align:middle;}
+tbody tr:hover td{background:#f5fff9;}
+
+.badge{font-size:9px;padding:2px 7px;border-radius:8px;font-weight:600;white-space:nowrap;display:inline-block;}
+.bg{background:#dff2ea;color:#075038;}.bp{background:#fae5de;color:#8a2e10;}
+.ba{background:#faeeda;color:#633806;}.bi{background:#eeedfe;color:#3c3489;}
+.bs{background:#f0f0ec;color:#666;}.bn{background:#fdefd6;color:#5c3200;}
+.bpub{background:#ddeaf8;color:#0c447c;}.bpriv{background:#fae5de;color:#8a2e10;}
+.bkcn{background:#dff2ea;color:#075038;}.bkcr{background:#eeedfe;color:#3c3489;}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:10px;padding:22px;width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2);}
+.modal h3{font-size:14px;font-weight:600;margin-bottom:16px;color:#1D9E75;border-bottom:1px solid #eee;padding-bottom:10px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ff label{font-size:11px;font-weight:500;color:#555;display:block;margin-bottom:3px;}
+.ff input,.ff select,.ff textarea{width:100%;font-size:12px;padding:6px 9px;border:1px solid #ddd;border-radius:5px;background:#fff;font-family:inherit;}
+.ff input:focus,.ff select:focus,.ff textarea:focus{outline:none;border-color:#1D9E75;}
+.ff.full{grid-column:1/-1;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #eee;}
+
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a18;color:#fff;padding:10px 18px;border-radius:7px;font-size:12px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}.toast.success{background:#1D9E75;}.toast.error{background:#C0392B;}
+.loading{display:flex;align-items:center;justify-content:center;padding:30px;gap:10px;color:#888;}
+.spinner{width:18px;height:18px;border:2px solid #e0e0e0;border-top-color:#1D9E75;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">📊 Tunnel KR — Kyriel Réhabilitation</span>
+  <div class="topbar-links"><a class="topbar-link" href="Planning_KR.html">📅 Planning KR</a><a class="topbar-link" href="Analyse_AO.html">📈 Analyse</a><a class="topbar-link" href="Index.html">🏠 Accueil</a></div>
+  <span class="topbar-user" id="user-name"></span>
+  <span class="topbar-logout" onclick="logout()">Déconnexion</span>
+</div>
+
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="ico">📊</div>
+    <h2>Tunnel KR — Kyriel Réhabilitation</h2>
+    <p>Connectez-vous avec votre compte Microsoft Kyriel.</p>
+    <button class="btn-login" onclick="doLogin()">Se connecter avec Microsoft</button>
+  </div>
+</div>
+
+<div id="main-screen" class="main" style="display:none;">
+  
+  <div class="toolbar">
+    <button class="btn primary" onclick="openModal(null)">+ Nouveau dossier</button>
+    <button class="btn" onclick="loadData()">↻ Actualiser</button>
+    <div class="btn-sep"></div>
+    
+    <select class="filter" id="f-annee" onchange="applyFilters()">
+      <option value="">Toutes années</option>
+      <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
+    </select>
+    <select class="filter" id="f-tq" onchange="applyFilters()"><option value="">Tous trimestres</option></select>
+    <select class="filter" id="f-res" onchange="applyFilters()">
+      <option value="">Tous statuts</option>
+      <option>GAGNE</option><option>PERDU</option><option>ANALYSE</option>
+      <option>NEGO</option><option>INFRUCTUEUX</option><option>STAND BY</option>
+    </select>
+    <select class="filter" id="f-pp" onchange="applyFilters()">
+      <option value="">PUB + PRIV</option><option>PUB</option><option>PRIV</option>
+    </select>
+    <input class="search" type="text" id="f-search" placeholder="🔍 Client / affaire..." oninput="applyFilters()">
+    <div class="btn-sep"></div>
+    <span id="count-lbl" style="font-size:11px;color:#888;"></span>
+  </div>
+  <div class="kpi-strip" id="kpi-strip"><div class="loading"><div class="spinner"></div>Chargement...</div></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:40px">#</th>
+        
+        <th onclick="sortBy('TrimestreDevis')" style="width:65px">Trimestre ↕</th>
+        <th onclick="sortBy('PubPriv')" style="width:55px">Type ↕</th>
+        <th onclick="sortBy('TypeMOA')" style="width:90px">MOA ↕</th>
+        <th onclick="sortBy('Client')" style="width:140px">Client ↕</th>
+        <th onclick="sortBy('Affaire')" style="min-width:200px">Affaire ↕</th>
+        <th onclick="sortBy('Lot')" style="width:70px">Lot ↕</th>
+        <th onclick="sortBy('TotalHT')" style="width:90px;text-align:right">Total HT ↕</th>
+        <th onclick="sortBy('Marge')" style="width:80px;text-align:right">Marge ↕</th>
+        <th onclick="sortBy('TxMarge')" style="width:55px;text-align:right">Tx% ↕</th>
+        <th onclick="sortBy('Resultat')" style="width:95px">Statut ↕</th>
+        <th onclick="sortBy('Departement')" style="width:45px">Dép ↕</th>
+        <th style="width:80px">Actions</th>
+      </tr></thead>
+      <tbody id="tbl-body"><tr><td colspan="14"><div class="loading"><div class="spinner"></div>Chargement...</div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">Nouveau dossier</h3>
+    <div class="form-grid">
+      
+      <div class="ff"><label>Trimestre devis</label><input type="text" id="f-TQ" placeholder="ex. 26T2"></div>
+      <div class="ff"><label>PUB / PRIV</label><select id="f-PP"><option>PUB</option><option>PRIV</option></select></div>
+      <div class="ff"><label>Type de MOA</label><select id="f-MOA"><option>PROMOTEUR</option><option>BAILLEUR</option><option>EG</option><option>COLLECTIVITE</option><option>PARTICULIER</option><option>ENTREPRISE</option></select></div>
+      <div class="ff"><label>Type de projet</label><select id="f-TPROJ"><option>LOGT</option><option>TERTIAIRE</option><option>LOGT/TERT</option><option>ERP</option><option>Industriel</option><option>Hôtellerie</option></select></div>
+      <div class="ff"><label>Environnement</label><select id="f-ENV"><option>Neuf</option><option>Réha</option><option>Site occupé</option></select></div>
+      <div class="ff"><label>Lot</label><select id="f-LOT"><option>MEX</option><option>MIN</option><option>SER</option><option>MEX+MIN</option><option>MEX-SER</option><option>BARDAGE</option></select></div>
+      <div class="ff full"><label>Client / MOA</label><input type="text" id="f-CLIENT" placeholder="ex. CROUS, Lamotte…"></div>
+      <div class="ff full"><label>Nom de l'affaire</label><input type="text" id="f-AFFAIRE" placeholder="ex. Nantes - 200 logts Berlioz"></div>
+      <div class="ff"><label>Département</label><input type="text" id="f-DEP" placeholder="ex. 44"></div>
+      <div class="ff"><label>Région</label><input type="text" id="f-REGION" placeholder="ex. Pays de la Loire"></div>
+      <div class="ff"><label>Total HT (€)</label><input type="number" id="f-HT" placeholder="ex. 250000"></div>
+      <div class="ff"><label>Taille</label><select id="f-TAILLE"><option>petit</option><option>moyen</option><option>grand</option><option>Très Grand</option></select></div>
+      <div class="ff"><label>Statut</label><select id="f-RES"><option>ANALYSE</option><option>NEGO</option><option>GAGNE</option><option>PERDU</option><option>INFRUCTUEUX</option><option>STAND BY</option></select></div>
+      <div class="ff"><label>Trimestre notification</label><input type="text" id="f-TN" placeholder="ex. 26T3"></div>
+      <div class="ff full"><label>Action en cours</label><textarea id="f-ACTION" rows="2" placeholder="Notes, actions…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Annuler</button>
+      <button class="btn primary" onclick="saveItem()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+const CLIENT_ID='a14d6f8e-d723-42de-b1c6-e5892e092157',TENANT_ID='b361cb3e-b7d9-4ea0-84c7-ccc513daffd6',SITE_NAME='CRMKyrielAO';
+const AUTHORITY='https://login.microsoftonline.com/'+TENANT_ID;
+const SCOPES=['https://hmsarl.sharepoint.com/.default'];
+let msalApp=null,currentAccount=null,accessToken=null;
+
+async function initMSAL(){
+  msalApp=new msal.PublicClientApplication({
+    auth:{clientId:CLIENT_ID,authority:AUTHORITY,redirectUri:'https://kyriel-ao.github.io/crm-kyriel/'+window.location.pathname.split('/').pop()},
+    cache:{cacheLocation:'sessionStorage'}
+  });
+  await msalApp.initialize();
+  const resp=await msalApp.handleRedirectPromise();
+  if(resp)currentAccount=resp.account;
+  const accs=msalApp.getAllAccounts();
+  if(accs.length>0&&!currentAccount)currentAccount=accs[0];
+}
+
+async function login(){
+  try{const r=await msalApp.loginPopup({scopes:SCOPES});currentAccount=r.account;accessToken=r.accessToken;return true;}
+  catch(e){console.error(e);return false;}
+}
+
+async function getToken(){
+  if(!currentAccount)return null;
+  try{const r=await msalApp.acquireTokenSilent({scopes:SCOPES,account:currentAccount});accessToken=r.accessToken;return accessToken;}
+  catch(e){try{const r=await msalApp.acquireTokenPopup({scopes:SCOPES});accessToken=r.accessToken;return accessToken;}catch(e2){return null;}}
+}
+
+async function getDigest(token){
+  const r=await fetch('https://hmsarl.sharepoint.com/sites/'+SITE_NAME+'/_api/contextinfo',{
+    method:'POST',headers:{'Authorization':'Bearer '+token,'Accept':'application/json;odata=verbose'}
+  });
+  const d=await r.json();return d.d.GetContextWebInformation.FormDigestValue;
+}
+
+async function spFetch(path,method='GET',body=null){
+  const token=await getToken();if(!token)throw new Error('Non authentifié');
+  const url='https://hmsarl.sharepoint.com/sites/'+SITE_NAME+'/_api/'+path;
+  const h={'Authorization':'Bearer '+token,'Accept':'application/json;odata=verbose','Content-Type':'application/json;odata=verbose'};
+  if(method!=='GET')h['X-RequestDigest']=await getDigest(token);
+  const opts={method,headers:h};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  if(!r.ok)throw new Error('SP '+r.status+': '+await r.text());
+  const txt=await r.text();return txt?JSON.parse(txt):null;
+}
+
+async function spGetList(listName){
+  const d=await spFetch("lists/getbytitle('"+listName+"')/items?$top=5000&$orderby=Created%20desc");
+  return d.d.results;
+}
+
+async function spAddItem(listName,fields){
+  const meta={type:'SP.Data.'+listName+'ListItem'};
+  return await spFetch("lists/getbytitle('"+listName+"')/items",'POST',{__metadata:meta,...fields});
+}
+
+async function spUpdateItem(listName,itemId,fields){
+  const token=await getToken();
+  const meta={type:'SP.Data.'+listName+'ListItem'};
+  await fetch('https://hmsarl.sharepoint.com/sites/'+SITE_NAME+'/_api/lists/getbytitle(\''+listName+'\''+')/items('+itemId+')',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token,'Accept':'application/json;odata=verbose',
+      'Content-Type':'application/json;odata=verbose','X-RequestDigest':await getDigest(token),
+      'X-HTTP-Method':'MERGE','If-Match':'*'},
+    body:JSON.stringify({__metadata:meta,...fields})
+  });
+}
+
+async function spDeleteItem(listName,itemId){
+  const token=await getToken();
+  await fetch('https://hmsarl.sharepoint.com/sites/'+SITE_NAME+'/_api/lists/getbytitle(\''+listName+'\''+')/items('+itemId+')',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token,'X-RequestDigest':await getDigest(token),'X-HTTP-Method':'DELETE','If-Match':'*'}
+  });
+}
+
+async function ensureColumns(listName,columns){
+  const token=await getToken();
+  for(const col of columns){
+    try{
+      await spFetch("lists/getbytitle('"+listName+"')/fields",'POST',{
+        __metadata:{type:'SP.Field'},Title:col.name,FieldTypeKind:col.type||2,Required:false
+      });
+    }catch(e){}
+  }
+}
+
+function logout(){msalApp.logoutPopup();location.reload();}
+
+
+const LIST_NAME='Tunnel_KR';
+const TUNNEL_COLS=[{"name": "Entite", "type": 2}, {"name": "PubPriv", "type": 2}, {"name": "TypeMOA", "type": 2}, {"name": "TypeProjet", "type": 2}, {"name": "Env", "type": 2}, {"name": "Client", "type": 2}, {"name": "Affaire", "type": 2}, {"name": "Lot", "type": 2}, {"name": "TotalHT", "type": 9}, {"name": "Marge", "type": 9}, {"name": "TxMarge", "type": 9}, {"name": "Resultat", "type": 2}, {"name": "TrimestreDevis", "type": 2}, {"name": "TrimestreNotif", "type": 2}, {"name": "Annee", "type": 9}, {"name": "Departement", "type": 2}, {"name": "Region", "type": 2}, {"name": "Taille", "type": 2}, {"name": "ActionEnCours", "type": 2}];
+const SEED_DATA={"KR": []};
+const HAS_TABS=false;
+
+let allData=[],editId=null,currentEntity='KR';
+let sortCol='TrimestreDevis',sortAsc=false;
+
+window.addEventListener('load',async()=>{
+  await initMSAL();
+  if(msalApp.getAllAccounts().length>0){currentAccount=msalApp.getAllAccounts()[0];showMain();}
+});
+
+async function doLogin(){const ok=await login();if(ok)showMain();else showToast('Erreur connexion','error');}
+
+async function showMain(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('main-screen').style.display='flex';
+  document.getElementById('user-name').textContent=currentAccount?.name||currentAccount?.username||'';
+  await ensureColumns(LIST_NAME,TUNNEL_COLS);
+  await loadData();
+}
+
+async function loadData(){
+  try{
+    const items=await spGetList(LIST_NAME);
+    const spData=items.map(r=>{
+      return{id:r.Id,sp:true,
+        Entite:r.Entite||'',PubPriv:r.PubPriv||'',TypeMOA:r.TypeMOA||'',
+        TypeProjet:r.TypeProjet||'',Env:r.Env||'',Client:r.Client||'',
+        Affaire:r.Affaire||'',Lot:r.Lot||'',
+        TotalHT:+r.TotalHT||0,Marge:+r.Marge||0,TxMarge:+r.TxMarge||0,
+        Resultat:r.Resultat||'',TrimestreDevis:r.TrimestreDevis||'',
+        TrimestreNotif:r.TrimestreNotif||'',Annee:+r.Annee||0,
+        Departement:r.Departement||'',Region:r.Region||'',Taille:r.Taille||'',
+        ActionEnCours:r.ActionEnCours||''};
+    });
+    // Fusionner SP + seed historique (seed = données historiques Excel)
+    const seedFlat=Object.entries(SEED_DATA).flatMap(([ent,rows])=>rows.map(r=>mapSeed(r,ent)));
+    allData=[...spData,...seedFlat];
+    initFilters();renderTable();
+  }catch(e){
+    console.error(e);
+    const seedFlat=Object.entries(SEED_DATA).flatMap(([ent,rows])=>rows.map(r=>mapSeed(r,ent)));
+    allData=seedFlat;
+    initFilters();renderTable();
+    showToast('Mode hors-ligne — données historiques uniquement','error');
+  }
+}
+
+function mapSeed(r,ent){
+  return{id:null,sp:false,Entite:ent,
+    PubPriv:r.pub_priv||'',TypeMOA:r.type_moa||'',TypeProjet:r.type_projet||'',
+    Env:r.env||'',Client:r.client||'',Affaire:r.affaire||'',Lot:r.lot||'',
+    TotalHT:+r.total_ht||0,Marge:+r.marge||0,TxMarge:+r.tx_marge||0,
+    Resultat:r.resultat||'',TrimestreDevis:r.tq||'',TrimestreNotif:r.tn||'',
+    Annee:+r.annee||0,Departement:r.dep||'',Region:r.region||'',
+    Taille:r.taille||'',ActionEnCours:''};
+}
+
+function switchEntity(ent,btn){
+  currentEntity=ent;
+  document.querySelectorAll('.etab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  // Mettre à jour filtre entité si présent
+  const fe=document.getElementById('f-entite');
+  if(fe)fe.value=ent;
+  applyFilters();
+}
+
+function initFilters(){
+  const tqs=[...new Set(allData.map(r=>r.TrimestreDevis).filter(Boolean))].sort((a,b)=>b>a?1:-1);
+  const sel=document.getElementById('f-tq');
+  sel.innerHTML='<option value="">Tous trimestres</option>';
+  tqs.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;sel.appendChild(o);});
+}
+
+function getFiltered(){
+  const entFilter=HAS_TABS?(document.getElementById('f-entite')?.value||currentEntity):currentEntity;
+  const annee=document.getElementById('f-annee').value;
+  const tq=document.getElementById('f-tq').value;
+  const res=document.getElementById('f-res').value;
+  const pp=document.getElementById('f-pp').value;
+  const search=document.getElementById('f-search').value.toLowerCase();
+  return allData.filter(r=>
+    (!entFilter||r.Entite===entFilter)&&
+    (!annee||String(r.Annee)===annee)&&
+    (!tq||r.TrimestreDevis===tq)&&
+    (!res||r.Resultat===res)&&
+    (!pp||r.PubPriv===pp)&&
+    (!search||r.Client.toLowerCase().includes(search)||r.Affaire.toLowerCase().includes(search))
+  );
+}
+
+function applyFilters(){renderTable();}
+function sortBy(col){if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderTable();}
+
+function fmt(n){if(!n)return'';n=+n;return n>=1e6?(n/1e6).toFixed(2)+'M€':n>=1e3?Math.round(n/1e3)+'K€':Math.round(n)+'€';}
+function pct(a,b){return b?Math.round(a/b*100):0;}
+const RES_BADGE={GAGNE:'bg',PERDU:'bp',ANALYSE:'ba',NEGO:'bn',INFRUCTUEUX:'bi','STAND BY':'bs'};
+
+function renderTable(){
+  const data=getFiltered();
+  const sorted=[...data].sort((a,b)=>{
+    let va=a[sortCol]??'',vb=b[sortCol]??'';
+    if(['TotalHT','Marge','TxMarge','Annee'].includes(sortCol)){va=+va;vb=+vb;}
+    return sortAsc?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);
+  });
+
+  const nG=data.filter(r=>r.Resultat==='GAGNE').length;
+  const nA=data.filter(r=>['ANALYSE','NEGO'].includes(r.Resultat)).length;
+  const nP=data.filter(r=>r.Resultat==='PERDU').length;
+  const htT=data.reduce((s,r)=>s+(+r.TotalHT||0),0);
+  const htG=data.filter(r=>r.Resultat==='GAGNE').reduce((s,r)=>s+(+r.TotalHT||0),0);
+  const tx=pct(nG,data.length);
+
+  document.getElementById('kpi-strip').innerHTML=
+    ks('Dossiers',data.length,'','blue')+sep()+
+    ks('Diffusé HT',fmt(htT),'','blue')+sep()+
+    ks('Gagnés',nG,fmt(htG),'green')+sep()+
+    ks('Taux transfo',tx+'%',nG+' dossiers',tx>=20?'green':tx>=15?'orange':'red')+sep()+
+    ks('En cours',nA,'Analyse + Négo','orange')+sep()+
+    ks('Perdus',nP,fmt(data.filter(r=>r.Resultat==='PERDU').reduce((s,r)=>s+(+r.TotalHT||0),0)),'red');
+
+  document.getElementById('count-lbl').textContent=sorted.length+' dossiers';
+
+  const colSpan=HAS_TABS?14:13;
+  const rows=sorted.map((r,i)=>{
+    const bc=RES_BADGE[r.Resultat]||'bs';
+    const mgC=r.Marge>0?'color:#1D9E75':'color:#C0392B';
+    const ri=JSON.stringify(r).replace(/"/g,'&quot;');
+    return`<tr ondblclick="openModal(${ri})">
+      <td style="color:#aaa;font-size:10px;">${r.sp?'🔵':'⚪'} ${i+1}</td>
+      ${HAS_TABS?`<td><span class="badge ${r.Entite==='KCN'?'bkcn':'bkcr'}">${r.Entite}</span></td>`:''}
+      <td>${r.TrimestreDevis}</td>
+      <td><span class="badge ${r.PubPriv==='PUB'?'bpub':'bpriv'}">${r.PubPriv}</span></td>
+      <td>${r.TypeMOA}</td>
+      <td title="${r.Client}">${r.Client}</td>
+      <td title="${r.Affaire}" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${r.Affaire}</td>
+      <td>${r.Lot}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(r.TotalHT)}</td>
+      <td style="text-align:right;${mgC}">${fmt(r.Marge)}</td>
+      <td style="text-align:right;">${r.TxMarge?r.TxMarge.toFixed(1)+'%':''}</td>
+      <td><span class="badge ${bc}">${r.Resultat}</span></td>
+      <td>${r.Departement}</td>
+      <td>${r.sp
+        ?`<button class="btn" style="padding:2px 6px;font-size:10px;" onclick="event.stopPropagation();openModal(${ri})">✏️</button>
+           <button class="btn danger" style="padding:2px 6px;font-size:10px;" onclick="event.stopPropagation();deleteItem(${r.id})">🗑</button>`
+        :'<span style="font-size:10px;color:#ccc;">historique</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tbl-body').innerHTML=rows||`<tr><td colspan="${colSpan}" style="text-align:center;padding:30px;color:#888;">Aucun dossier — cliquez sur "+ Nouveau dossier" pour commencer</td></tr>`;
+}
+
+function ks(l,v,s,cls){return`<div class="ks"><div class="ks-lbl">${l}</div><div class="ks-val ${cls||''}">${v}</div>${s?`<div class="ks-sub">${s}</div>`:''}</div>`;}
+function sep(){return'<div class="ks-sep"></div>';}
+
+function openModal(r){
+  editId=r?.id||null;
+  document.getElementById('modal-title').textContent=editId?'Modifier le dossier':'Nouveau dossier';
+  const g=id=>document.getElementById(id);
+  if(HAS_TABS&&g('f-ENT'))g('f-ENT').value=r?.Entite||currentEntity;
+  g('f-TQ').value=r?.TrimestreDevis||'';
+  g('f-PP').value=r?.PubPriv||'PUB';
+  g('f-MOA').value=r?.TypeMOA||'PROMOTEUR';
+  g('f-TPROJ').value=r?.TypeProjet||'LOGT';
+  g('f-ENV').value=r?.Env||'Neuf';
+  g('f-LOT').value=r?.Lot||'MEX';
+  g('f-CLIENT').value=r?.Client||'';
+  g('f-AFFAIRE').value=r?.Affaire||'';
+  g('f-DEP').value=r?.Departement||'';
+  g('f-REGION').value=r?.Region||'';
+  g('f-HT').value=r?.TotalHT||'';
+  g('f-TAILLE').value=r?.Taille||'moyen';
+  g('f-RES').value=r?.Resultat||'ANALYSE';
+  g('f-TN').value=r?.TrimestreNotif||'';
+  g('f-ACTION').value=r?.ActionEnCours||'';
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');editId=null;}
+
+async function saveItem(){
+  const g=id=>document.getElementById(id).value;
+  const tqVal=g('f-TQ');
+  const fields={
+    Entite:HAS_TABS?g('f-ENT'):currentEntity,
+    PubPriv:g('f-PP'),TypeMOA:g('f-MOA'),TypeProjet:g('f-TPROJ'),Env:g('f-ENV'),
+    Lot:g('f-LOT'),Client:g('f-CLIENT'),Affaire:g('f-AFFAIRE'),
+    Departement:g('f-DEP'),Region:g('f-REGION'),TotalHT:+g('f-HT')||0,
+    Taille:g('f-TAILLE'),Resultat:g('f-RES'),TrimestreDevis:tqVal,
+    TrimestreNotif:g('f-TN'),ActionEnCours:g('f-ACTION'),
+    Annee:+(tqVal.match(/^\d{2}/)?.[0]||'26')+2000,
+  };
+  try{
+    if(editId){await spUpdateItem(LIST_NAME,editId,fields);showToast('Dossier mis à jour ✓','success');}
+    else{await spAddItem(LIST_NAME,fields);showToast('Dossier ajouté ✓','success');}
+    closeModal();await loadData();
+  }catch(e){showToast('Erreur: '+e.message,'error');}
+}
+
+async function deleteItem(id){
+  if(!confirm('Supprimer ce dossier définitivement ?'))return;
+  try{await spDeleteItem(LIST_NAME,id);showToast('Supprimé','success');await loadData();}
+  catch(e){showToast('Erreur suppression','error');}
+}
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',3000);
+}
+</script>
+</body>
+</html>

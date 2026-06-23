@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Planning KC — Kyriel Construction — CRM Kyriel</title>
+<script src="msal-browser.min.js"></script>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0ec;color:#1a1a18;font-size:13px;}
+.topbar{background:#1D9E75;padding:0 16px;display:flex;align-items:center;gap:12px;height:46px;flex-shrink:0;}
+.topbar-title{font-size:15px;font-weight:600;color:#fff;}
+.topbar-entity{font-size:11px;color:rgba(255,255,255,.85);background:rgba(255,255,255,.18);padding:3px 10px;border-radius:12px;}
+.topbar-links{display:flex;gap:6px;margin-left:auto;}
+.topbar-link{font-size:11px;color:rgba(255,255,255,.85);text-decoration:none;padding:4px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.3);}
+.topbar-link:hover{background:rgba(255,255,255,.15);}
+.topbar-user{font-size:11px;color:rgba(255,255,255,.7);}
+.topbar-logout{font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;text-decoration:underline;}
+
+.auth-screen{display:flex;align-items:center;justify-content:center;height:calc(100vh - 46px);}
+.auth-card{background:#fff;border-radius:12px;padding:36px 44px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08);max-width:380px;}
+.auth-card .ico{font-size:40px;margin-bottom:14px;}
+.auth-card h2{font-size:18px;font-weight:600;margin-bottom:8px;}
+.auth-card p{font-size:13px;color:#666;margin-bottom:22px;line-height:1.6;}
+.btn-login{background:#1D9E75;color:#fff;border:none;padding:11px 30px;border-radius:7px;font-size:14px;font-weight:500;cursor:pointer;}
+.btn-login:hover{background:#16845f;}
+
+.main{display:flex;flex-direction:column;height:calc(100vh - 46px);}
+
+/* Entity tabs */
+.entity-tabs{background:#fff;border-bottom:2px solid #e8e8e0;padding:0 14px;display:flex;gap:0;flex-shrink:0;}
+.etab{padding:9px 20px;font-size:12px;font-weight:500;color:#888;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;}
+.etab:hover{color:#444;}
+.etab.active{color:#1D9E75;border-bottom-color:#1D9E75;font-weight:600;}
+.etab.kcn.active{color:#1D9E75;border-bottom-color:#1D9E75;}
+.etab.kcr.active{color:#534AB7;border-bottom-color:#534AB7;}
+.etab.kr.active{color:#D85A30;border-bottom-color:#D85A30;}
+.etab.ka.active{color:#BA7517;border-bottom-color:#BA7517;}
+
+.toolbar{background:#fff;border-bottom:1px solid #ddd;padding:7px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.btn{font-size:11px;padding:5px 12px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;color:#444;}
+.btn:hover{background:#f5f5f0;}
+.btn.primary{background:#1D9E75;color:#fff;border-color:#1D9E75;}
+.btn.primary:hover{background:#16845f;}
+.btn.danger{color:#C0392B;border-color:#e8a8a8;}
+.btn-sep{width:1px;height:22px;background:#e0e0e0;}
+.filter{font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:5px;background:#fff;}
+.search{font-size:11px;padding:4px 8px;border:1px solid #ddd;border-radius:5px;width:200px;}
+
+.kpi-strip{background:#fff;border-bottom:1px solid #e8e8e0;padding:7px 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.ks{display:flex;flex-direction:column;}
+.ks-lbl{font-size:10px;color:#888;}
+.ks-val{font-size:15px;font-weight:600;}
+.green{color:#1D9E75;}.red{color:#C0392B;}.blue{color:#185FA5;}.orange{color:#BA7517;}.purple{color:#534AB7;}
+.ks-sub{font-size:10px;color:#aaa;}
+.ks-sep{width:1px;height:32px;background:#e8e8e0;}
+
+.tbl-wrap{flex:1;overflow:auto;background:#fff;}
+table{border-collapse:collapse;width:100%;min-width:1100px;}
+thead th{background:#f5f5f0;border-bottom:2px solid #1D9E75;border-right:1px solid #e0e0e0;padding:6px 8px;font-size:11px;font-weight:600;color:#555;white-space:nowrap;position:sticky;top:0;z-index:5;cursor:pointer;user-select:none;}
+thead th:hover{background:#ebebeb;}
+tbody td{padding:5px 8px;border-bottom:1px solid #f0f0ec;border-right:1px solid #f5f5f0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;vertical-align:middle;}
+tbody tr:hover td{background:#f5fff9;}
+
+.badge{font-size:9px;padding:2px 7px;border-radius:8px;font-weight:600;white-space:nowrap;display:inline-block;}
+.bg{background:#dff2ea;color:#075038;}.bp{background:#fae5de;color:#8a2e10;}
+.ba{background:#faeeda;color:#633806;}.bi{background:#eeedfe;color:#3c3489;}
+.bs{background:#f0f0ec;color:#666;}.bn{background:#fdefd6;color:#5c3200;}
+.bpub{background:#ddeaf8;color:#0c447c;}.bpriv{background:#fae5de;color:#8a2e10;}
+.bkcn{background:#dff2ea;color:#075038;}.bkcr{background:#eeedfe;color:#3c3489;}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:10px;padding:22px;width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2);}
+.modal h3{font-size:14px;font-weight:600;margin-bottom:16px;color:#1D9E75;border-bottom:1px solid #eee;padding-bottom:10px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ff label{font-size:11px;font-weight:500;color:#555;display:block;margin-bottom:3px;}
+.ff input,.ff select,.ff textarea{width:100%;font-size:12px;padding:6px 9px;border:1px solid #ddd;border-radius:5px;background:#fff;font-family:inherit;}
+.ff input:focus,.ff select:focus,.ff textarea:focus{outline:none;border-color:#1D9E75;}
+.ff.full{grid-column:1/-1;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #eee;}
+
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a18;color:#fff;padding:10px 18px;border-radius:7px;font-size:12px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}.toast.success{background:#1D9E75;}.toast.error{background:#C0392B;}
+.loading{display:flex;align-items:center;justify-content:center;padding:30px;gap:10px;color:#888;}
+.spinner{width:18px;height:18px;border:2px solid #e0e0e0;border-top-color:#1D9E75;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.cal-toolbar{background:#fff;border-bottom:1px solid #ddd;padding:7px 14px;display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.cal-nav{font-size:18px;padding:2px 12px;border:1px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;}
+.cal-nav:hover{background:#f5f5f0;}
+.cal-month{font-size:15px;font-weight:600;min-width:150px;text-align:center;}
+.cal-wrap{flex:1;overflow:auto;padding:12px;}
+.cal-grid{display:grid;border:1px solid #ddd;border-radius:7px;overflow:hidden;background:#ddd;gap:1px;}
+.cal-hdr{background:#1D9E75;color:#fff;text-align:center;padding:5px 2px;font-size:10px;font-weight:600;}
+.cal-hdr.we{background:#16845f;}
+.cal-hdr.tod{background:#fff;color:#1D9E75;}
+.cal-entity-lbl{background:#f8f8f5;padding:4px 8px;font-size:11px;font-weight:600;display:flex;align-items:center;min-height:52px;border-left:3px solid #1D9E75;}
+.cal-cell{background:#fff;padding:2px 3px;min-height:52px;}
+.cal-cell.we{background:#fffdf5;}
+.cal-cell.tod{background:#f0fff9;}
+.ao-chip{border-radius:3px;padding:2px 5px;margin:1px 0;font-size:9px;font-weight:500;cursor:pointer;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid;}
+.ao-chip:hover{opacity:.8;}
+.ao-pub{background:#ddeaf8;color:#0a3d6e;border-left-color:#185FA5;}
+.ao-priv{background:#fae5de;color:#5a1a08;border-left-color:#D85A30;}
+.charge-bar{height:20px;background:#eee;border-radius:3px;overflow:hidden;position:relative;margin-top:2px;}
+.charge-fill{height:100%;border-radius:3px;transition:width .3s;}
+.charge-num{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:600;color:#555;}
+.tip{position:fixed;background:#1a1a18;color:#fff;padding:10px 14px;border-radius:7px;font-size:11px;pointer-events:none;z-index:9999;display:none;max-width:300px;line-height:1.7;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.tip strong{display:block;font-size:12px;margin-bottom:4px;color:#9FE1CB;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">📅 Planning KC — Kyriel Construction</span>
+  <div class="topbar-links"><a class="topbar-link" href="Tunnel_KC.html">📊 Tunnel KC</a><a class="topbar-link" href="Analyse_AO.html">📈 Analyse</a><a class="topbar-link" href="Index.html">🏠 Accueil</a></div>
+  <span class="topbar-user" id="user-name"></span>
+  <span class="topbar-logout" onclick="logout()">Déconnexion</span>
+</div>
+
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="ico">📅</div>
+    <h2>Planning KC — Kyriel Construction</h2>
+    <p>Connectez-vous avec votre compte Microsoft Kyriel.</p>
+    <button class="btn-login" onclick="doLogin()">Se connecter avec Microsoft</button>
+  </div>
+</div>
+
+<div id="main-screen" class="main" style="display:none;">
+  <div class="entity-tabs"><div class="etab kcn active" onclick="switchEntity('KCN',this)">KCN — Nantes</div><div class="etab kcr " onclick="switchEntity('KCR',this)">KCR — Rennes</div></div>
+  <div class="cal-toolbar">
+    <button class="cal-nav" onclick="calNav(-1)">‹</button>
+    <span class="cal-month" id="cal-month"></span>
+    <button class="cal-nav" onclick="calNav(1)">›</button>
+    <button class="btn" onclick="calToday()">Aujourd'hui</button>
+    <div class="btn-sep"></div>
+    <select class="filter" id="f-entite-cal" onchange="renderCal()"><option value="">Toutes entités</option><option value="KCN">KCN — Nantes</option><option value="KCR">KCR — Rennes</option></select>
+    <button class="btn primary" onclick="openModal(null)">+ Nouvel AO</button>
+    <button class="btn" onclick="loadData()">↻ Actualiser</button>
+    <div class="btn-sep"></div>
+    <span style="font-size:11px;color:#888;">
+      <span style="display:inline-block;width:9px;height:9px;background:#ddeaf8;border:1px solid #185FA5;border-radius:2px;margin-right:3px;"></span>Public&nbsp;
+      <span style="display:inline-block;width:9px;height:9px;background:#fae5de;border:1px solid #D85A30;border-radius:2px;margin-right:3px;"></span>Privé
+    </span>
+    <span id="cal-count" style="font-size:11px;color:#888;"></span>
+  </div>
+  <div class="cal-wrap"><div id="cal-grid"></div></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">Nouvel AO</h3>
+    <div class="form-grid">
+      <div class="ff"><label>Entité</label><select id="f-ENT"><option value="">--</option><option value="KCN">KCN — Nantes</option><option value="KCR">KCR — Rennes</option></select></div>
+      <div class="ff"><label>PUB / PRIV</label><select id="f-PP"><option>PUB</option><option>PRIV</option></select></div>
+      <div class="ff"><label>Type de MOA</label><select id="f-MOA"><option>PROMOTEUR</option><option>BAILLEUR</option><option>EG</option><option>COLLECTIVITE</option><option>PARTICULIER</option><option>ENTREPRISE</option></select></div>
+      <div class="ff"><label>Type de projet</label><select id="f-TPROJ"><option>LOGT</option><option>TERTIAIRE</option><option>LOGT/TERT</option><option>ERP</option><option>Industriel</option><option>Hôtellerie</option></select></div>
+      <div class="ff"><label>Environnement</label><select id="f-ENV"><option>Neuf</option><option>Réha</option><option>Site occupé</option></select></div>
+      <div class="ff"><label>Lot</label><select id="f-LOT"><option>MEX</option><option>MIN</option><option>SER</option><option>MEX+MIN</option><option>MEX-SER</option><option>BARDAGE</option></select></div>
+      <div class="ff"><label>Date de remise</label><input type="date" id="f-DATE"></div>
+      <div class="ff full"><label>Client / MOA</label><input type="text" id="f-CLIENT" placeholder="ex. CROUS, Lamotte…"></div>
+      <div class="ff full"><label>Nom opération</label><input type="text" id="f-NOM" placeholder="ex. Nantes - 200 logts Berlioz"></div>
+      <div class="ff"><label>Ville</label><input type="text" id="f-VILLE" placeholder="ex. Nantes"></div>
+      <div class="ff"><label>Département</label><input type="text" id="f-DEP" placeholder="ex. 44"></div>
+      <div class="ff"><label>Chargé d'affaire</label><input type="text" id="f-CA" placeholder="ex. JG, RT…"></div>
+      <div class="ff"><label>Métreur</label><input type="text" id="f-MET" placeholder="ex. CG, JLC…"></div>
+      <div class="ff"><label>Montant estimé (€)</label><input type="number" id="f-HT"></div>
+      <div class="ff"><label>Statut</label><select id="f-STAT"><option>En cours</option><option>Répondu</option><option>Non répondu</option><option>Gagné</option><option>Perdu</option></select></div>
+      <div class="ff full"><label>Note</label><textarea id="f-NOTE" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Annuler</button>
+      <button class="btn primary" onclick="saveItem()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+
+const CLIENT_ID='a14d6f8e-d723-42de-b1c6-e5892e092157',TENANT_ID='b361cb3e-b7d9-4ea0-84c7-ccc513daffd6',SITE_NAME='CRMKyrielAO';
+const AUTHORITY='https://login.microsoftonline.com/'+TENANT_ID;
+const SCOPES=['https://hmsarl.sharepoint.com/.default'];
+let msalApp=null,currentAccount=null,accessToken=null;
+
+async function initMSAL(){
+  msalApp=new msal.PublicClientApplication({
+    auth:{clientId:CLIENT_ID,authority:AUTHORITY,redirectUri:'https://kyriel-ao.github.io/crm-kyriel/'+window.location.pathname.split('/').pop()},
+    cache:{cacheLocation:'sessionStorage'}
+  });
+  await msalApp.initialize();
+  const resp=await msalApp.handleRedirectPromise();
+  if(resp)currentAccount=resp.account;
+  const accs=msalApp.getAllAccounts();
+  if(accs.length>0&&!currentAccount)currentAccount=accs[0];
+}
+
+async function login(){
+  try{const r=await msalApp.loginPopup({scopes:SCOPES});currentAccount=r.account;accessToken=r.accessToken;return true;}
+  catch(e){console.error(e);return false;}
+}
+
+async function getToken(){
+  if(!currentAccount)return null;
+  try{const r=await msalApp.acquireTokenSilent({scopes:SCOPES,account:currentAccount});accessToken=r.accessToken;return accessToken;}
+  catch(e){try{const r=await msalApp.acquireTokenPopup({scopes:SCOPES});accessToken=r.accessToken;return accessToken;}catch(e2){return null;}}
+}
+
+async function getDigest(token){
+  const r=await fetch('https://hmsarl.sharepoint.com/sites/'+SITE_NAME+'/_api/contextinfo',{
+    method:'POST',headers:{'Authorization':'Bearer '+token,'Accept':'application/json;odata=verbose'}
+  });
+  const d=await r.json();return d.d.GetContextWebInformation.FormDigestValue;
+}
+
+async function spFetch(path,method='GET',body=null){
+  const token=await getToken();if(!token)throw new Error('Non authentifié');
+  const url='https://hmsarl.sharepoint.com/sites/'+SITE_NAME+'/_api/'+path;
+  const h={'Authorization':'Bearer '+token,'Accept':'application/json;odata=verbose','Content-Type':'application/json;odata=verbose'};
+  if(method!=='GET')h['X-RequestDigest']=await getDigest(token);
+  const opts={method,headers:h};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  if(!r.ok)throw new Error('SP '+r.status+': '+await r.text());
+  const txt=await r.text();return txt?JSON.parse(txt):null;
+}
+
+async function spGetList(listName){
+  const d=await spFetch("lists/getbytitle('"+listName+"')/items?$top=5000&$orderby=Created%20desc");
+  return d.d.results;
+}
+
+async function spAddItem(listName,fields){
+  const meta={type:'SP.Data.'+listName+'ListItem'};
+  return await spFetch("lists/getbytitle('"+listName+"')/items",'POST',{__metadata:meta,...fields});
+}
+
+async function spUpdateItem(listName,itemId,fields){
+  const token=await getToken();
+  const meta={type:'SP.Data.'+listName+'ListItem'};
+  await fetch('https://hmsarl.sharepoint.com/sites/'+SITE_NAME+'/_api/lists/getbytitle(\''+listName+'\''+')/items('+itemId+')',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token,'Accept':'application/json;odata=verbose',
+      'Content-Type':'application/json;odata=verbose','X-RequestDigest':await getDigest(token),
+      'X-HTTP-Method':'MERGE','If-Match':'*'},
+    body:JSON.stringify({__metadata:meta,...fields})
+  });
+}
+
+async function spDeleteItem(listName,itemId){
+  const token=await getToken();
+  await fetch('https://hmsarl.sharepoint.com/sites/'+SITE_NAME+'/_api/lists/getbytitle(\''+listName+'\''+')/items('+itemId+')',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+token,'X-RequestDigest':await getDigest(token),'X-HTTP-Method':'DELETE','If-Match':'*'}
+  });
+}
+
+async function ensureColumns(listName,columns){
+  const token=await getToken();
+  for(const col of columns){
+    try{
+      await spFetch("lists/getbytitle('"+listName+"')/fields",'POST',{
+        __metadata:{type:'SP.Field'},Title:col.name,FieldTypeKind:col.type||2,Required:false
+      });
+    }catch(e){}
+  }
+}
+
+function logout(){msalApp.logoutPopup();location.reload();}
+
+
+const LIST_NAME='Planning_KC';
+const PLANNING_COLS=[{"name": "Entite", "type": 2}, {"name": "PubPriv", "type": 2}, {"name": "TypeMOA", "type": 2}, {"name": "TypeProjet", "type": 2}, {"name": "Env", "type": 2}, {"name": "Lot", "type": 2}, {"name": "Client", "type": 2}, {"name": "NomOperation", "type": 2}, {"name": "Ville", "type": 2}, {"name": "Departement", "type": 2}, {"name": "Region", "type": 2}, {"name": "DateRemise", "type": 4}, {"name": "ChargeAffaire", "type": 2}, {"name": "Metreur", "type": 2}, {"name": "Statut", "type": 2}, {"name": "MontantEstime", "type": 9}, {"name": "Note", "type": 3}];
+const MOIS=['','Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const JOURS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const HAS_TABS=true;
+const DEFAULT_ENTITY='KCN';
+const ENTITY_COLOR='#1D9E75';
+
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth()+1;
+let allData=[],editId=null,currentEntity=DEFAULT_ENTITY;
+
+window.addEventListener('load',async()=>{
+  await initMSAL();
+  if(msalApp.getAllAccounts().length>0){currentAccount=msalApp.getAllAccounts()[0];showMain();}
+});
+async function doLogin(){const ok=await login();if(ok)showMain();else showToast('Erreur connexion','error');}
+
+async function showMain(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('main-screen').style.display='flex';
+  document.getElementById('user-name').textContent=currentAccount?.name||currentAccount?.username||'';
+  await ensureColumns(LIST_NAME,PLANNING_COLS);
+  await loadData();
+}
+
+async function loadData(){
+  try{
+    const items=await spGetList(LIST_NAME);
+    allData=items.map(r=>{
+      const d=r.DateRemise?new Date(r.DateRemise):null;
+      return{id:r.Id,sp:true,Entite:r.Entite||DEFAULT_ENTITY,
+        PubPriv:r.PubPriv||'',TypeMOA:r.TypeMOA||'',TypeProjet:r.TypeProjet||'',
+        Env:r.Env||'',Lot:r.Lot||'',Client:r.Client||'',NomOperation:r.NomOperation||'',
+        Ville:r.Ville||'',Departement:r.Departement||'',ChargeAffaire:r.ChargeAffaire||'',
+        Metreur:r.Metreur||'',Statut:r.Statut||'',MontantEstime:+r.MontantEstime||0,
+        Note:r.Note||'',DateRemise:r.DateRemise||'',
+        day:d?d.getDate():0,month:d?d.getMonth()+1:0,year:d?d.getFullYear():0};
+    });
+    renderCal();
+  }catch(e){console.error(e);allData=[];renderCal();showToast('Erreur chargement','error');}
+}
+
+function switchEntity(ent,btn){
+  currentEntity=ent;
+  document.querySelectorAll('.etab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const fe=document.getElementById('f-entite-cal');
+  if(fe)fe.value=ent;
+  renderCal();
+}
+
+function calNav(d){calMonth+=d;if(calMonth>12){calMonth=1;calYear++;}if(calMonth<1){calMonth=12;calYear--;}renderCal();}
+function calToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth()+1;renderCal();}
+
+function renderCal(){
+  const entFilter=HAS_TABS?(document.getElementById('f-entite-cal')?.value||currentEntity):currentEntity;
+  const dim=new Date(calYear,calMonth,0).getDate();
+  const today=new Date();
+  const todDay=(today.getFullYear()===calYear&&today.getMonth()+1===calMonth)?today.getDate():0;
+  document.getElementById('cal-month').textContent=MOIS[calMonth]+' '+calYear;
+
+  const filtered=allData.filter(r=>(!entFilter||r.Entite===entFilter)&&r.year===calYear&&r.month===calMonth);
+  const byDay={};for(let d=1;d<=dim;d++)byDay[d]=[];
+  filtered.forEach(r=>{if(r.day)byDay[r.day].push(r);});
+  document.getElementById('cal-count').textContent=filtered.length+' AO ce mois';
+
+  const maxC=Math.max(1,...Object.values(byDay).map(a=>a.length));
+  let html='<div class="cal-grid" style="grid-template-columns:90px repeat('+dim+',1fr);">';
+
+  // En-tête
+  html+='<div class="cal-hdr" style="background:#f5f5f0;color:#555;text-align:left;padding-left:8px;">Entité</div>';
+  for(let d=1;d<=dim;d++){
+    const dow=new Date(calYear,calMonth-1,d).getDay();
+    const isWE=dow===0||dow===6,isTod=d===todDay;
+    html+=`<div class="cal-hdr${isWE?' we':''}${isTod?' tod':''}"><div style="font-weight:600">${d}</div><div style="font-size:8px;opacity:.8">${JOURS[dow]}</div></div>`;
+  }
+
+  // Ligne AO
+  html+=`<div class="cal-entity-lbl">${entFilter||'Tous'}</div>`;
+  for(let d=1;d<=dim;d++){
+    const dow=new Date(calYear,calMonth-1,d).getDay();
+    const isWE=dow===0||dow===6,isTod=d===todDay;
+    const aos=byDay[d]||[];
+    html+=`<div class="cal-cell${isWE?' we':''}${isTod?' tod':''}">`;
+    aos.forEach(ao=>{
+      const cls='ao-chip '+(ao.PubPriv==='PUB'?'ao-pub':'ao-priv');
+      const ri=JSON.stringify(ao).replace(/"/g,'&quot;');
+      html+=`<div class="${cls}" onmouseenter="showTip(event,${ri})" onmouseleave="hideTip()" ondblclick="openModal(${ri})">${ao.Ville||ao.Client||ao.NomOperation||'—'}</div>`;
+    });
+    html+='</div>';
+  }
+
+  // Barre de charge
+  html+='<div class="cal-entity-lbl" style="font-size:10px;color:#888;border-left-color:#ccc;">Charge</div>';
+  for(let d=1;d<=dim;d++){
+    const n=(byDay[d]||[]).length;
+    const pct=Math.round(n/maxC*100);
+    const isTod=d===todDay;
+    const col=n>=3?'#C0392B':n>=2?'#BA7517':ENTITY_COLOR;
+    html+=`<div class="cal-cell" style="padding:4px 3px;">`;
+    if(n)html+=`<div class="charge-bar"><div class="charge-fill" style="width:${pct}%;background:${isTod?'#1D9E75':col};opacity:.7;"></div><span class="charge-num">${n}</span></div>`;
+    html+='</div>';
+  }
+  html+='</div>';
+
+  // Résumé mensuel
+  const nPUB=filtered.filter(r=>r.PubPriv==='PUB').length;
+  html+=`<div style="margin-top:10px;background:#fff;border:1px solid #ddd;border-radius:7px;padding:9px 14px;display:flex;gap:20px;font-size:12px;">
+    <span>Total ce mois : <b>${filtered.length}</b></span>
+    <span style="color:#185FA5;">Public : <b>${nPUB}</b></span>
+    <span style="color:#D85A30;">Privé : <b>${filtered.length-nPUB}</b></span>
+    <span>MEX : <b>${filtered.filter(r=>r.Lot&&r.Lot.includes('MEX')).length}</b></span>
+    <span>MIN : <b>${filtered.filter(r=>r.Lot&&r.Lot.includes('MIN')&&!r.Lot.includes('MEX')).length}</b></span>
+  </div>`;
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function showTip(e,r){
+  const t=document.getElementById('tip');
+  t.innerHTML=`<strong>${r.Client||r.NomOperation}</strong>${r.NomOperation}<br>${r.PubPriv} · ${r.Lot} · Dép.${r.Departement}<br>CA: ${r.ChargeAffaire||'—'} / Métreur: ${r.Metreur||'—'}<br>Statut: ${r.Statut}${r.MontantEstime?'<br>Montant: '+Math.round(r.MontantEstime/1000)+'K€':''}`;
+  t.style.display='block';
+  t.style.left=Math.min(e.clientX+12,window.innerWidth-320)+'px';
+  t.style.top=Math.max(e.clientY-90,8)+'px';
+}
+function hideTip(){document.getElementById('tip').style.display='none';}
+
+function openModal(r){
+  editId=r?.id||null;
+  document.getElementById('modal-title').textContent=editId?'Modifier l\'AO':'Nouvel AO';
+  const g=id=>document.getElementById(id);
+  if(HAS_TABS&&g('f-ENT'))g('f-ENT').value=r?.Entite||currentEntity;
+  g('f-PP').value=r?.PubPriv||'PUB';
+  g('f-MOA').value=r?.TypeMOA||'PROMOTEUR';
+  g('f-TPROJ').value=r?.TypeProjet||'LOGT';
+  g('f-ENV').value=r?.Env||'Neuf';
+  g('f-LOT').value=r?.Lot||'MEX';
+  g('f-DATE').value=r?.DateRemise?r.DateRemise.slice(0,10):'';
+  g('f-CLIENT').value=r?.Client||'';
+  g('f-NOM').value=r?.NomOperation||'';
+  g('f-VILLE').value=r?.Ville||'';
+  g('f-DEP').value=r?.Departement||'';
+  g('f-CA').value=r?.ChargeAffaire||'';
+  g('f-MET').value=r?.Metreur||'';
+  g('f-HT').value=r?.MontantEstime||'';
+  g('f-STAT').value=r?.Statut||'En cours';
+  g('f-NOTE').value=r?.Note||'';
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');editId=null;}
+
+async function saveItem(){
+  const g=id=>document.getElementById(id).value;
+  const dateVal=g('f-DATE');
+  const fields={
+    Entite:HAS_TABS?g('f-ENT'):DEFAULT_ENTITY,
+    PubPriv:g('f-PP'),TypeMOA:g('f-MOA'),TypeProjet:g('f-TPROJ'),Env:g('f-ENV'),
+    Lot:g('f-LOT'),DateRemise:dateVal?new Date(dateVal).toISOString():null,
+    Client:g('f-CLIENT'),NomOperation:g('f-NOM'),Ville:g('f-VILLE'),
+    Departement:g('f-DEP'),ChargeAffaire:g('f-CA'),Metreur:g('f-MET'),
+    MontantEstime:+g('f-HT')||0,Statut:g('f-STAT'),Note:g('f-NOTE'),
+  };
+  try{
+    if(editId){await spUpdateItem(LIST_NAME,editId,fields);showToast('AO mis à jour ✓','success');}
+    else{await spAddItem(LIST_NAME,fields);showToast('AO ajouté ✓','success');}
+    closeModal();await loadData();
+  }catch(e){showToast('Erreur: '+e.message,'error');}
+}
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',3000);
+}
+</script>
+</body>
+</html>

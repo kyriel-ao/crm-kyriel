@@ -203,14 +203,14 @@ async function initMSAL(){
 }
 
 async function login(){
-  try{const r=await msalApp.loginPopup({scopes:SCOPES});currentAccount=r.account;accessToken=r.accessToken;return true;}
+  try{await msalApp.loginRedirect({scopes:SCOPES});return true;}
   catch(e){console.error(e);return false;}
 }
 
 async function getToken(){
   if(!currentAccount)return null;
   try{const r=await msalApp.acquireTokenSilent({scopes:SCOPES,account:currentAccount});accessToken=r.accessToken;return accessToken;}
-  catch(e){try{const r=await msalApp.acquireTokenPopup({scopes:SCOPES});accessToken=r.accessToken;return accessToken;}catch(e2){return null;}}
+  catch(e){try{await msalApp.acquireTokenRedirect({scopes:SCOPES});return null;}catch(e2){return null;}}
 }
 
 async function getDigest(token){
